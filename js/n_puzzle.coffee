@@ -1,4 +1,5 @@
 game =
+  isFinished: false
   init: (size)->
     this.size = size
     this.board = _.shuffle [0...this.size*this.size]
@@ -6,7 +7,15 @@ game =
   c1to2: (i)-> [i%this.size, Math.floor(i/this.size)]
   c2to1: (x,y)-> x+y*this.size
   boardSwitch: (i,j) -> [this.board[i], this.board[j]] = [this.board[j], this.board[i]]
+  showBoard: ->
+    console.log "--------"
+    for y in [0...this.size]
+      temp = ""
+      for x in [0...this.size]
+        temp += this.board[this.c2to1(x,y)] + ", "
+      console.log temp
   active: (value)->
+    if this.isFinished then return 0
     index = _.indexOf this.board,value
 
     #0: none, 1: up, 2: right, 3: down, 4: left
@@ -27,11 +36,13 @@ game =
       when 4 then this.boardSwitch(index, index-1)
 
     return direction
+  check: ->
+    if _.isEqual this.board, [0...this.size*this.size]
+      this.clear(this.hole)
+  clear: -> return #virtual
 
-smart.ready {
-  puzzle:"images/puzzle.png"
-}, (S,images)->
-  game.init(10)
+smart.ready puzzle:"images/puzzle.png", (S,images)->
+  game.init(3)
 
   stage = new S.Stage("n_puzzle")
 
@@ -63,5 +74,34 @@ smart.ready {
           when 2 then {x:this.x+s_width/game.size}
           when 3 then {y:this.y+s_height/game.size}
           when 4 then {x:this.x-s_width/game.size}
-          
-        S.tween.start this,params,"easeOutQuad",0.1
+        if params then S.tween.start this,params, "easeOutQuad", 0.1, 0, game.check.bind(game)
+
+  game.clear = (index)->
+    game.isFinished = true
+    [x, y] = game.c1to2 index
+    piece = new S.Canvas(s_width/game.size,s_height/game.size)
+    piece.x = x * s_width/game.size
+    piece.y = y * s_height/game.size
+    piece.draw images.puzzle, x*p_width/game.size, y*p_height/game.size, p_width/game.size, p_height/game.size
+    piece.alpha = 0
+    stage.addChild piece
+    S.tween.start piece, alpha:1 ,"easeOutQuad",1,0, ->
+      console.log "finish!"
+      panel = new S.Canvas(s_width,s_height)
+      panel.bg.color = "#FFF"
+      panel.alpha = 0.6
+      
+      text = new S.Text("Clear!")
+      text.x = 40
+      text.y = 140
+      text.size = 64
+      text.bold = true
+      text.underline = true
+      text.color = "yellow"
+      text.rotation = -20
+
+      stage.addChild panel
+      stage.addChild text
+
+
+
