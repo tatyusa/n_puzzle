@@ -1,3 +1,8 @@
+allocate = (obj, configs...) ->
+  for config in configs
+    for key, value of config
+      obj[key] = value
+
 game =
   isFinished: false
   init: (size)->
@@ -57,8 +62,9 @@ smart.ready puzzle:"images/puzzle.png", (S,images)->
       if (x+1 is game.size) and (y+1 is game.size) then break
 
       piece = new S.Canvas(s_width/game.size,s_height/game.size)
-      piece.x = x * s_width/game.size
-      piece.y = y * s_height/game.size
+      allocate piece, 
+        x: x * s_width/game.size
+        y: y * s_height/game.size
       
       # order in original image
       piece.index = game.board[game.c2to1(x,y)]
@@ -80,25 +86,27 @@ smart.ready puzzle:"images/puzzle.png", (S,images)->
     game.isFinished = true
     [x, y] = game.c1to2 index
     piece = new S.Canvas(s_width/game.size,s_height/game.size)
-    piece.x = x * s_width/game.size
-    piece.y = y * s_height/game.size
+    allocate piece,
+      x: x * s_width/game.size
+      y: y * s_height/game.size
+      alpha: 0
+
     piece.draw images.puzzle, x*p_width/game.size, y*p_height/game.size, p_width/game.size, p_height/game.size
-    piece.alpha = 0
     stage.addChild piece
     S.tween.start piece, alpha:1 ,"easeOutQuad",1,0, ->
-      console.log "finish!"
       panel = new S.Canvas(s_width,s_height)
       panel.bg.color = "#FFF"
       panel.alpha = 0.6
       
       text = new S.Text("Clear!")
-      text.x = 40
-      text.y = 140
-      text.size = 64
-      text.bold = true
-      text.underline = true
-      text.color = "yellow"
-      text.rotation = -20
+      allocate text,
+        x: 40
+        y: 140
+        size: 64
+        bold: true
+        underline: true
+        color: "yellow"
+        rotation: -20
 
       stage.addChild panel
       stage.addChild text
